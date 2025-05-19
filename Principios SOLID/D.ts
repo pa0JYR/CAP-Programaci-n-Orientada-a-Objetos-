@@ -1,0 +1,1 @@
+/* La clase padre no debe de conocer / depender de la clase */
