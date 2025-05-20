@@ -56,7 +56,10 @@ class Productos implements IProducto{
 }
 class MaquinaExpendedora {
     protected _productos : Productos [] = [];
-
+    private  _dineroDisponible : number ;
+    constructor (dineroDisponible : number){
+        this._dineroDisponible = dineroDisponible;
+    }
     agregarProducto (producto : Productos) : void{
         this._productos.push(producto);
     }
@@ -71,15 +74,20 @@ class MaquinaExpendedora {
         if (!compra || compra.existencia <= 0) {
             console.log("No es posible realizar la compra");
         }else{
-            const  cambio : number = procesarPago(pago, compra.precio);
-            if (cambio === -1 ) {
-                console.log(`No es posible realizar la compra faltan: ${compra.precio - pago}`);
-            } else {
-                console.log(`Compra exitosa el cambio a dar es: ${cambio}`);
-                compra.realizarCompra();
+            const  cambio : number = procesarPago(pago, compra.precio, this._dineroDisponible);
+            switch (cambio) {
+                case -1:
+                    console.log(`No es posible realizar la compra faltan: ${compra.precio - pago}`);
+                    break;
+                case -2 : 
+                    console.log(`No hay suficiente cambio disponible. Intenta con un pago exacto.`);
+                default:
+                    console.log(`Compra exitosa el cambio a dar es: ${cambio}`);
+                    this._dineroDisponible += compra.precio; 
+                    this._dineroDisponible -= cambio;  
+                    compra.realizarCompra();
+                    break;
             }
-              
-            
         }
     }
     mostrarVentasTotales():void{
@@ -90,14 +98,21 @@ class MaquinaExpendedora {
         })
         console.log(`Las ventas totales son: ${ventasTotales} pesos`);
     }
+    mostrarDineroDisponible () : void{
+        console.log(`El dinero disponible actual es: ${this._dineroDisponible}`);
+    }
 }
-function procesarPago (pago : number, precio : number) : number {
-    if (pago < precio) {
+function procesarPago (pago : number, precio : number, dineroDisponible : number) : number {
+    let cambio = pago - precio;
+    if (cambio < 0) {
         return -1;
     }
-    return pago - precio;
+    if (cambio > dineroDisponible) {
+        return -2
+    }
+    return cambio ;
 }
-const maquinaService = new MaquinaExpendedora;
+const maquinaService = new MaquinaExpendedora (1500);
 const chicleBubalo = new Productos ('chicle', 'botana',3,'Bubalo', 20);
 const papasSabritas = new Productos ('papas','botana',15,'Sabritas',30);
 const jugoMango = new Productos ('Boing Mango', 'Jugo', 12,'Boing',20);
@@ -115,6 +130,7 @@ maquinaService.compraProducto(3,31);
 maquinaService.compraProducto(3,13);
 maquinaService.compraProducto(3,20);
 maquinaService.mostrarVentasTotales();
-console.log(`Existencia de ${chicleBubalo.nombre} ${chicleBubalo.marca} es de: ${chicleBubalo.enExistencia()}`);
-console.log(`Existencia de ${papasSabritas.nombre} ${papasSabritas.marca} es de: ${papasSabritas.enExistencia()}`);
-console.log(`Existencia de ${jugoMango.nombre} ${jugoMango.marca} es de: ${jugoMango.enExistencia()}`);
+console.log(`Existencia de ${chicleBubalo.nombre} ${chicleBubalo.marca} es de: ${chicleBubalo.enExistencia()} y las ventas totales son de: ${chicleBubalo.ventaProducto()}`);
+console.log(`Existencia de ${papasSabritas.nombre} ${papasSabritas.marca} es de: ${papasSabritas.enExistencia()} y las ventas totales son de: ${papasSabritas.ventaProducto()}`);
+console.log(`Existencia de ${jugoMango.nombre} ${jugoMango.marca} es de: ${jugoMango.enExistencia()} y las ventas totales son de: ${jugoMango.ventaProducto()}`);
+maquinaService.mostrarDineroDisponible();
