@@ -95,7 +95,7 @@ class MaquinaExpendedora {
         if (!compra || compra.existencia <= 0) {
             console.log("No es posible realizar la compra");
         }else{
-            const  cambio : number = procesarPago(pago, compra.precio);
+            const  cambio : number = procesarPago(pago, compra.precio, this._dinero);
             switch (cambio) {
                 case -1:
                     console.log(`No es posible realizar la compra faltan: ${compra.precio - pago}`);
@@ -104,8 +104,6 @@ class MaquinaExpendedora {
                     console.log(`No hay suficiente cambio disponible. Intenta con un pago exacto.`);
                 default:
                     console.log(`Compra exitosa el cambio a dar es: ${cambio}`);
-                    /* this._dineroDisponible += compra.precio; 
-                    this._dineroDisponible -= cambio;   */
                     compra.realizarCompra();
                     break;
             }
@@ -128,15 +126,41 @@ class MaquinaExpendedora {
         console.log(`La cantidad total es: ${total}`);
     }
 }
-function procesarPago (pago : number, precio : number) : number {
+function procesarPago(pago: number, precio: number, dineroDisponible: Efectivo[]): number {
     let cambio = pago - precio;
+
     if (cambio < 0) {
-        return -1;
+        return -1; // Pago insuficiente
     }
-    /* if (cambio > dineroDisponible) {
-        return -2
-    } */
-    return cambio ;
+
+    // Ordenar billetes/monedas de mayor a menor
+    const disponibles = dineroDisponible
+        .sort((a, b) => b.valor - a.valor)
+        .map(d => new Efectivo(d.valor, d.cantidad)); // Copia para no modificar directamente
+
+    const billetesParaCambio: { valor: number, cantidad: number }[] = [];
+
+    for (let d of disponibles) {
+        let cantidadNecesaria = Math.floor(cambio / d.valor);
+        let cantidadADar = Math.min(cantidadNecesaria, d.cantidad);
+
+        if (cantidadADar > 0) {
+            billetesParaCambio.push({ valor: d.valor, cantidad: cantidadADar });
+            cambio -= d.valor * cantidadADar;
+        }
+    }
+
+    if (cambio > 0) {
+        return -2; // No hay cambio suficiente
+    }
+    billetesParaCambio.forEach(b => {
+        let original = dineroDisponible.find(d => d.valor === b.valor);
+        if (original) {
+            original.gastoBilletes(b.cantidad);
+        }
+    });
+
+    return pago - precio;
 }
 const maquinaService = new MaquinaExpendedora ();
 const billeteCincuenta = new Efectivo (50,40);
