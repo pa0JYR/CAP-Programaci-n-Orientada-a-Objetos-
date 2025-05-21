@@ -24,7 +24,27 @@ interface IProducto {
     realizarCompra () : void;  /* gestiona la compra, es decir que aquí se va a  */
     ventaProducto () : number;
 }
-
+/* Para fines practicos las monedas serán catalogadas como billetes */
+interface IEfectivo{
+     valor : string;
+    cantidad : number;
+    cantidadDisponible () : void;
+    gastoBilletes (cantidaGastada : number) : void;
+}
+class Efectivo implements IEfectivo{
+    valor : string;
+    cantidad : number;
+    constructor(valor : string, cantidad : number) {
+        this.cantidad = cantidad;
+        this.valor = valor;
+    }
+    cantidadDisponible() : void{
+        console.log(`Hay ${this.cantidad} billetes de $${this.valor} pesos`)
+    }
+    gastoBilletes (cantidaGastada : number): void{
+        this.cantidad = this.cantidad - cantidaGastada; 
+    }
+}
 class Productos implements IProducto{
     private static contadorId = 1;
     id: number ;
@@ -55,10 +75,11 @@ class Productos implements IProducto{
     }
 }
 class MaquinaExpendedora {
+    protected _dinero : Efectivo [] = [];
     protected _productos : Productos [] = [];
-    private  _dineroDisponible : number ;
-    constructor (dineroDisponible : number){
-        this._dineroDisponible = dineroDisponible;
+    
+    agregarBilletes (dineroDisponible : Efectivo []) : void{
+        this._dinero.push(dineroDisponible);
     }
     agregarProducto (producto : Productos) : void{
         this._productos.push(producto);
@@ -102,7 +123,7 @@ class MaquinaExpendedora {
         console.log(`El dinero disponible actual es: ${this._dineroDisponible}`);
     }
 }
-function procesarPago (pago : number, precio : number, dineroDisponible : number) : number {
+function procesarPago (pago : number, precio : number, dineroDisponible : Efectivo []) : number {
     let cambio = pago - precio;
     if (cambio < 0) {
         return -1;
@@ -112,7 +133,7 @@ function procesarPago (pago : number, precio : number, dineroDisponible : number
     }
     return cambio ;
 }
-const maquinaService = new MaquinaExpendedora (1500);
+const maquinaService = new MaquinaExpendedora ();
 const chicleBubalo = new Productos ('chicle', 'botana',3,'Bubalo', 20);
 const papasSabritas = new Productos ('papas','botana',15,'Sabritas',30);
 const jugoMango = new Productos ('Boing Mango', 'Jugo', 12,'Boing',20);
